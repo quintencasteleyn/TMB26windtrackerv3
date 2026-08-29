@@ -1,0 +1,506 @@
+<title>TMB26 - Wind watcher v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    color-scheme: light;
+    --bg:            #F5F1E6;
+    --surface:       #FFFFFF;
+    --surface-2:     #FBF8F0;
+    --border:        #E1DAC5;
+    --ink:           #182623;
+    --ink-2:         #4E5C56;
+    --ink-3:         #8A9590;
+    --accent:        #1BAF7A;
+    --accent-ink:    #0E5C40;
+    --accent-tint:   #E3F5EC;
+
+    --s-own:   #1BAF7A;
+    --s-mainstage: #EDA100;
+    --s-lma:   #2A78D6;
+    --s-mf:    #EB6834;
+    --s-mc:    #4A3AA7;
+    --s-mr:    #E34948;
+
+    --good:     #0CA30C;
+    --warning:  #C98100;
+    --serious:  #D9663D;
+    --critical: #D03B3B;
+
+    --shadow: 0 1px 2px rgba(24,38,35,.06), 0 6px 20px rgba(24,38,35,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:            #0F1817;
+      --surface:       #16211F;
+      --surface-2:     #131C1B;
+      --border:        #263531;
+      --ink:           #E9EFEC;
+      --ink-2:         #A9B6B1;
+      --ink-3:         #71807B;
+      --accent:        #2FBF8E;
+      --accent-ink:    #8FE9C6;
+      --accent-tint:   #143028;
+
+      --s-own:  #199E70;
+      --s-mainstage: #C98500;
+      --s-lma:  #3987E5;
+      --s-mf:   #D95926;
+      --s-mc:   #9085E9;
+      --s-mr:   #E66767;
+
+      --good:     #3FBF3F;
+      --warning:  #FAB219;
+      --serious:  #EC835A;
+      --critical: #E66767;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:            #0F1817;
+    --surface:       #16211F;
+    --surface-2:     #131C1B;
+    --border:        #263531;
+    --ink:           #E9EFEC;
+    --ink-2:         #A9B6B1;
+    --ink-3:         #71807B;
+    --accent:        #2FBF8E;
+    --accent-ink:    #8FE9C6;
+    --accent-tint:   #143028;
+
+    --s-own:  #199E70;
+    --s-mainstage: #C98500;
+    --s-lma:  #3987E5;
+    --s-mf:   #D95926;
+    --s-mc:   #9085E9;
+    --s-mr:   #E66767;
+
+    --good:     #3FBF3F;
+    --warning:  #FAB219;
+    --serious:  #EC835A;
+    --critical: #E66767;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 64px; }
+
+  .masthead{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:20px;
+    flex-wrap:wrap; padding-bottom:20px; margin-bottom:22px;
+    border-bottom:2px solid var(--border);
+  }
+  .masthead h1{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size:clamp(30px,4.4vw,46px); line-height:.96; letter-spacing:.2px;
+    margin:0 0 6px; text-wrap:balance; text-transform:uppercase;
+  }
+  .masthead .sub{ color:var(--ink-2); font-size:14.5px; }
+  .masthead .sub b{ color:var(--ink); font-weight:600; }
+  .meta-col{ text-align:right; font-size:13px; color:var(--ink-2); }
+  .meta-col .win{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink); font-weight:500; }
+
+  .btnbar{ display:flex; gap:10px; align-items:center; margin-top:10px; justify-content:flex-end; }
+  button.refresh{
+    font-family:'Public Sans',sans-serif; font-weight:600; font-size:13px;
+    background:var(--accent); color:#06231A; border:none; border-radius:7px;
+    padding:9px 15px; cursor:pointer; display:inline-flex; gap:7px; align-items:center;
+    box-shadow:var(--shadow);
+  }
+  button.refresh:hover{ filter:brightness(1.06); }
+  button.refresh:focus-visible{ outline:2px solid var(--accent-ink); outline-offset:2px; }
+  .refresh svg{ width:14px; height:14px; }
+  .hint{ font-size:11.5px; color:var(--ink-3); max-width:220px; text-align:right; line-height:1.35; }
+
+  .stat-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+  @media (max-width:820px){ .stat-row{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .stat-row{ grid-template-columns:1fr;} }
+  .stat{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px 16px 14px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .stat .band{ position:absolute; left:0; top:0; bottom:0; width:4px; }
+  .stat .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-2); font-weight:600; margin-bottom:8px;}
+  .stat .value{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:27px; font-variant-numeric:tabular-nums; line-height:1; }
+  .stat .value small{ font-size:14px; color:var(--ink-2); font-weight:500; margin-left:3px;}
+  .stat .foot{ margin-top:8px; font-size:11.5px; color:var(--ink-3); }
+  .chip{
+    display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700;
+    padding:3px 8px 3px 7px; border-radius:100px; margin-top:9px; text-transform:uppercase; letter-spacing:.03em;
+  }
+  .chip .dot{ width:6px; height:6px; border-radius:50%; }
+  .chip.good{ background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good); }
+  .chip.warning{ background:color-mix(in srgb, var(--warning) 18%, transparent); color:var(--warning); }
+  .chip.serious{ background:color-mix(in srgb, var(--serious) 18%, transparent); color:var(--serious); }
+  .chip.critical{ background:color-mix(in srgb, var(--critical) 18%, transparent); color:var(--critical); }
+  .chip.good .dot{ background:var(--good);} .chip.warning .dot{ background:var(--warning);}
+  .chip.serious .dot{ background:var(--serious);} .chip.critical .dot{ background:var(--critical);}
+
+  section.panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:20px 20px 10px; margin-bottom:22px; box-shadow:var(--shadow);
+  }
+  .panel h2{
+    font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:20px;
+    text-transform:uppercase; letter-spacing:.03em; margin:0 0 2px;
+  }
+  .panel .panel-sub{ font-size:12.5px; color:var(--ink-2); margin-bottom:12px; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin:2px 0 12px; font-size:12.5px; color:var(--ink-2); }
+  .legend .item{ display:flex; align-items:center; gap:7px; }
+  .legend .sw{ width:11px; height:11px; border-radius:50%; display:inline-block; flex:none; box-shadow:0 0 0 1px rgba(0,0,0,.06); }
+
+  .chart-wrap{ overflow-x:auto; }
+  svg.chart{ display:block; }
+  .gridline{ stroke:var(--border); stroke-width:1; }
+  .axis-label{ fill:var(--ink-3); font-size:10.5px; font-family:'IBM Plex Mono',monospace; }
+  .now-line{ stroke:var(--ink-3); stroke-width:1; stroke-dasharray:2 3; }
+  .crosshair{ stroke:var(--ink-2); stroke-width:1; pointer-events:none; }
+  .hoverdot{ pointer-events:none; }
+  .tooltip{
+    position:absolute; pointer-events:none; background:var(--ink); color:var(--bg);
+    font-size:11.5px; padding:8px 10px; border-radius:8px; font-family:'IBM Plex Mono',monospace;
+    box-shadow:0 6px 18px rgba(0,0,0,.25); white-space:nowrap; z-index:5; opacity:0; transition:opacity .08s;
+  }
+  .tooltip .tt-row{ display:flex; justify-content:space-between; gap:14px; }
+  .tooltip .tt-t{ opacity:.65; margin-bottom:4px; font-family:'Public Sans',sans-serif; }
+
+  table.datatable{ width:100%; border-collapse:collapse; font-size:12.5px; font-family:'IBM Plex Mono',monospace; }
+  table.datatable th{
+    position:sticky; top:0; background:var(--surface); text-align:right; padding:9px 10px;
+    font-family:'Public Sans',sans-serif; font-weight:700; font-size:10.8px; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--ink-2); border-bottom:2px solid var(--border); white-space:nowrap;
+  }
+  table.datatable th:first-child, table.datatable td:first-child{ text-align:left; }
+  table.datatable td{ padding:6px 10px; text-align:right; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums; white-space:nowrap;}
+  table.datatable tr.now-row td{ background:var(--accent-tint); }
+  table.datatable td.own{ font-weight:600; }
+  table.datatable td.empty{ color:var(--ink-3); }
+  .table-scroll{ max-height:520px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; }
+
+  .src-tag{ display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:5px; margin-left:6px; vertical-align:1px;}
+
+  footer.note{ font-size:12px; color:var(--ink-2); line-height:1.6; padding-top:6px; }
+  footer.note a{ color:var(--accent-ink); }
+  footer.note .src-list{ display:flex; gap:16px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; }
+  footer.note .src-list a{ display:inline-flex; align-items:center; gap:6px; }
+  footer.note .src-list .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; flex:none; }
+
+  .pending{ text-align:center; padding:26px 10px; color:var(--ink-3); font-size:13px; }
+</style>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>TMB Wind Watch</h1>
+      <div class="sub">Baie Stage &amp; Main Stage anemometers vs. public forecasts — <b>Touquet Music Beach Festival</b>, Le Touquet-Paris-Plage</div>
+    </div>
+    <div class="meta-col">
+      <div>Comparison window</div>
+      <div class="win" id="winRange">—</div>
+      <div class="btnbar">
+        <div class="hint">Auto-refreshes every 5 min, and instantly when you switch back to this tab — or click to reload now.</div>
+        <button class="refresh" onclick="location.reload()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+          Reload latest
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <section class="panel">
+    <h2>Average wind — trailing 10 min</h2>
+    <div class="panel-sub">15-minute blocks · km/h · two on-site sensors vs. the four public sources</div>
+    <div id="legend1" class="legend"></div>
+    <div class="chart-wrap"><div id="chart1"></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Highest hourly wind gust</h2>
+    <div class="panel-sub">Rolling 60-minute maximum, sampled every 15 minutes · km/h</div>
+    <div id="legend2" class="legend"></div>
+    <div class="chart-wrap"><div id="chart2"></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Data table</h2>
+    <div class="panel-sub">Every 15-minute block from window start to window end</div>
+    <div class="table-scroll">
+      <table class="datatable" id="dataTable"></table>
+    </div>
+    <div class="legend" id="abbrevLegend" style="margin-top:12px;"></div>
+  </section>
+
+  <footer class="note">
+    <div><b>Reading this page:</b> the two on-site columns are live readings from our own anemometers — Baie Stage's 10-min average wind and rolling 60-min max gust, recomputed from a fresh export each cycle; Main Stage's readings sampled directly from its live station each cycle, with the same rolling 60-min max gust. The four public columns are forecasts/regional bulletins, not live observations at this exact spot — they only change once an hour or so, so their line steps rather than slopes between updates. Treat gaps as "not yet reported," not zero.</div>
+    <div class="src-list" id="srcList"></div>
+    <div id="builtAt" style="margin-top:8px;"></div>
+  </footer>
+
+</div>
+
+<script>
+// Cache-bust guard: runs before anything else. If this is the plain shared
+// URL (no "_=" query param), what's about to render could be a stale
+// cached copy -- the browser's own HTTP cache, or an edge/CDN cache in
+// front of the hosting platform serving the same cached response to
+// everyone who opens the link -- rather than the latest published version.
+// This was reported directly: colleagues opening the bare link, on
+// different devices, all got the same hours-old snapshot. Immediately
+// re-fetch with a unique query string; most caching layers treat a
+// different query string as a different resource, so this reliably
+// bypasses them and forces a fresh network fetch every time the plain
+// link is opened. Runs once per load -- the redirected URL already
+// carries "_=", so the check is false next time.
+if(!/[?&]_=/.test(location.search)){
+  location.replace(location.pathname + '?_=' + Date.now());
+}
+const DATA = [{"t_iso": "2026-08-29T13:00:00Z", "t_local": "15:00", "date_local": "Sat 29 Aug", "own_avg_kmh": 19.5, "own_avg_ms": 5.43, "own_gust_hourly_kmh": 35.0, "own_gust_hourly_ms": 9.71, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 30.0, "lma_gust_kmh": 54.0, "mc_wind_kmh": 19.0, "mc_gust_kmh": null, "mf_wind_kmh": 25.0, "mf_gust_kmh": 55.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 55.0}, {"t_iso": "2026-08-29T13:15:00Z", "t_local": "15:15", "date_local": "Sat 29 Aug", "own_avg_kmh": 10.5, "own_avg_ms": 2.92, "own_gust_hourly_kmh": 35.0, "own_gust_hourly_ms": 9.71, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 30.0, "lma_gust_kmh": 54.0, "mc_wind_kmh": 19.0, "mc_gust_kmh": null, "mf_wind_kmh": 25.0, "mf_gust_kmh": 55.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 55.0}, {"t_iso": "2026-08-29T13:30:00Z", "t_local": "15:30", "date_local": "Sat 29 Aug", "own_avg_kmh": 15.8, "own_avg_ms": 4.38, "own_gust_hourly_kmh": 39.3, "own_gust_hourly_ms": 10.92, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 30.0, "lma_gust_kmh": 54.0, "mc_wind_kmh": 19.0, "mc_gust_kmh": null, "mf_wind_kmh": 25.0, "mf_gust_kmh": 55.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 55.0}, {"t_iso": "2026-08-29T13:45:00Z", "t_local": "15:45", "date_local": "Sat 29 Aug", "own_avg_kmh": 20.6, "own_avg_ms": 5.71, "own_gust_hourly_kmh": 42.5, "own_gust_hourly_ms": 11.8, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 30.0, "lma_gust_kmh": 54.0, "mc_wind_kmh": 19.0, "mc_gust_kmh": null, "mf_wind_kmh": 25.0, "mf_gust_kmh": 55.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 55.0}, {"t_iso": "2026-08-29T14:00:00Z", "t_local": "16:00", "date_local": "Sat 29 Aug", "own_avg_kmh": 17.4, "own_avg_ms": 4.84, "own_gust_hourly_kmh": 54.3, "own_gust_hourly_ms": 15.08, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 35.0, "lma_gust_kmh": 64.0, "mc_wind_kmh": 23.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 65.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T14:15:00Z", "t_local": "16:15", "date_local": "Sat 29 Aug", "own_avg_kmh": 13.8, "own_avg_ms": 3.83, "own_gust_hourly_kmh": 54.3, "own_gust_hourly_ms": 15.08, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 35.0, "lma_gust_kmh": 64.0, "mc_wind_kmh": 23.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 65.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T14:30:00Z", "t_local": "16:30", "date_local": "Sat 29 Aug", "own_avg_kmh": 21.5, "own_avg_ms": 5.98, "own_gust_hourly_kmh": 54.3, "own_gust_hourly_ms": 15.08, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 35.0, "lma_gust_kmh": 64.0, "mc_wind_kmh": 23.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 65.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T14:45:00Z", "t_local": "16:45", "date_local": "Sat 29 Aug", "own_avg_kmh": 20.1, "own_avg_ms": 5.58, "own_gust_hourly_kmh": 54.3, "own_gust_hourly_ms": 15.08, "mainstage_avg_kmh": 36.7, "mainstage_gust_hourly_kmh": 51.5, "lma_wind_kmh": 35.0, "lma_gust_kmh": 64.0, "mc_wind_kmh": 23.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 65.0, "mr_wind_kmh": 35.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T15:00:00Z", "t_local": "17:00", "date_local": "Sat 29 Aug", "own_avg_kmh": 22.5, "own_avg_ms": 6.26, "own_gust_hourly_kmh": 50.9, "own_gust_hourly_ms": 14.14, "mainstage_avg_kmh": 11.5, "mainstage_gust_hourly_kmh": 51.5, "lma_wind_kmh": 33.0, "lma_gust_kmh": 61.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 70.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T15:15:00Z", "t_local": "17:15", "date_local": "Sat 29 Aug", "own_avg_kmh": 22.3, "own_avg_ms": 6.2, "own_gust_hourly_kmh": 50.9, "own_gust_hourly_ms": 14.14, "mainstage_avg_kmh": 9.0, "mainstage_gust_hourly_kmh": 51.5, "lma_wind_kmh": 33.0, "lma_gust_kmh": 61.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 70.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T15:30:00Z", "t_local": "17:30", "date_local": "Sat 29 Aug", "own_avg_kmh": 22.2, "own_avg_ms": 6.17, "own_gust_hourly_kmh": 49.7, "own_gust_hourly_ms": 13.81, "mainstage_avg_kmh": 9.0, "mainstage_gust_hourly_kmh": 51.5, "lma_wind_kmh": 33.0, "lma_gust_kmh": 61.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 70.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T15:45:00Z", "t_local": "17:45", "date_local": "Sat 29 Aug", "own_avg_kmh": 17.3, "own_avg_ms": 4.81, "own_gust_hourly_kmh": 49.7, "own_gust_hourly_ms": 13.81, "mainstage_avg_kmh": 17.3, "mainstage_gust_hourly_kmh": 33.1, "lma_wind_kmh": 33.0, "lma_gust_kmh": 61.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 70.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 65.0}, {"t_iso": "2026-08-29T16:00:00Z", "t_local": "18:00", "date_local": "Sat 29 Aug", "own_avg_kmh": 21.3, "own_avg_ms": 5.91, "own_gust_hourly_kmh": 48.2, "own_gust_hourly_ms": 13.4, "mainstage_avg_kmh": 6.1, "mainstage_gust_hourly_kmh": 38.5, "lma_wind_kmh": 36.0, "lma_gust_kmh": 63.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T16:15:00Z", "t_local": "18:15", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 36.0, "lma_gust_kmh": 63.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T16:30:00Z", "t_local": "18:30", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 36.0, "lma_gust_kmh": 63.0, "mc_wind_kmh": 28.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T16:45:00Z", "t_local": "18:45", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 36.0, "lma_gust_kmh": 63.0, "mc_wind_kmh": 30.0, "mc_gust_kmh": null, "mf_wind_kmh": 30.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T17:00:00Z", "t_local": "19:00", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 72.0, "mc_wind_kmh": 30.0, "mc_gust_kmh": null, "mf_wind_kmh": 35.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T17:15:00Z", "t_local": "19:15", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 72.0, "mc_wind_kmh": 30.0, "mc_gust_kmh": null, "mf_wind_kmh": 35.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T17:30:00Z", "t_local": "19:30", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 72.0, "mc_wind_kmh": 30.0, "mc_gust_kmh": null, "mf_wind_kmh": 35.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T17:45:00Z", "t_local": "19:45", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 72.0, "mc_wind_kmh": 33.0, "mc_gust_kmh": null, "mf_wind_kmh": 35.0, "mf_gust_kmh": 75.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 70.0}, {"t_iso": "2026-08-29T18:00:00Z", "t_local": "20:00", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 74.0, "mc_wind_kmh": 33.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T18:15:00Z", "t_local": "20:15", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 74.0, "mc_wind_kmh": 33.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T18:30:00Z", "t_local": "20:30", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 74.0, "mc_wind_kmh": 33.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T18:45:00Z", "t_local": "20:45", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 74.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T19:00:00Z", "t_local": "21:00", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 73.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T19:15:00Z", "t_local": "21:15", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 73.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T19:30:00Z", "t_local": "21:30", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 73.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T19:45:00Z", "t_local": "21:45", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 41.0, "lma_gust_kmh": 73.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T20:00:00Z", "t_local": "22:00", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T20:15:00Z", "t_local": "22:15", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T20:30:00Z", "t_local": "22:30", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T20:45:00Z", "t_local": "22:45", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 42.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T21:00:00Z", "t_local": "23:00", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 42.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T21:15:00Z", "t_local": "23:15", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 42.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T21:30:00Z", "t_local": "23:30", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 42.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T21:45:00Z", "t_local": "23:45", "date_local": "Sat 29 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T22:00:00Z", "t_local": "00:00", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T22:15:00Z", "t_local": "00:15", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T22:30:00Z", "t_local": "00:30", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 39.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T22:45:00Z", "t_local": "00:45", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 43.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T23:00:00Z", "t_local": "01:00", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 43.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T23:15:00Z", "t_local": "01:15", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 43.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T23:30:00Z", "t_local": "01:30", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 43.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-29T23:45:00Z", "t_local": "01:45", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 40.0, "lma_gust_kmh": 70.0, "mc_wind_kmh": 40.0, "mc_gust_kmh": null, "mf_wind_kmh": 45.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 45.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-30T00:00:00Z", "t_local": "02:00", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 69.0, "mc_wind_kmh": 40.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-30T00:15:00Z", "t_local": "02:15", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 69.0, "mc_wind_kmh": 40.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-30T00:30:00Z", "t_local": "02:30", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 69.0, "mc_wind_kmh": 40.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-30T00:45:00Z", "t_local": "02:45", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": 39.0, "lma_gust_kmh": 69.0, "mc_wind_kmh": 40.0, "mc_gust_kmh": null, "mf_wind_kmh": 40.0, "mf_gust_kmh": 85.0, "mr_wind_kmh": 40.0, "mr_gust_kmh": 75.0}, {"t_iso": "2026-08-30T01:00:00Z", "t_local": "03:00", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T01:15:00Z", "t_local": "03:15", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T01:30:00Z", "t_local": "03:30", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T01:45:00Z", "t_local": "03:45", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T02:00:00Z", "t_local": "04:00", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T02:15:00Z", "t_local": "04:15", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T02:30:00Z", "t_local": "04:30", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T02:45:00Z", "t_local": "04:45", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}, {"t_iso": "2026-08-30T03:00:00Z", "t_local": "05:00", "date_local": "Sun 30 Aug", "own_avg_kmh": null, "own_avg_ms": null, "own_gust_hourly_kmh": null, "own_gust_hourly_ms": null, "mainstage_avg_kmh": null, "mainstage_gust_hourly_kmh": null, "lma_wind_kmh": null, "lma_gust_kmh": null, "mc_wind_kmh": null, "mc_gust_kmh": null, "mf_wind_kmh": null, "mf_gust_kmh": null, "mr_wind_kmh": null, "mr_gust_kmh": null}];
+const BUILT_AT = "16:15 UTC, 29 Aug";
+
+// Auto-refresh: this page is a static snapshot from the moment it loaded --
+// it does NOT sync live on its own, so an open tab can silently go stale
+// while cycles publish in the background. Two mechanisms:
+//  1) A 5-minute timer forces a real (cache-busted) reload for a tab that
+//     stays in the foreground the whole time.
+//  2) Browsers throttle or fully suspend JS timers in a background/
+//     minimized tab, so (1) alone can leave a tab that's been sitting in
+//     the background showing data that's tens of minutes old, long past
+//     the 5-minute mark -- exactly what happened when a colleague's tab
+//     was found stuck on an old block. "visibilitychange" fires reliably
+//     the instant a tab becomes visible again regardless of that
+//     throttling, so use it to force an immediate refresh whenever the
+//     tab was hidden for more than a minute -- catching it up right when
+//     someone actually looks at it, instead of waiting on the timer.
+function hardReload(){
+  location.href = location.origin + location.pathname + '?_=' + Date.now();
+}
+setTimeout(hardReload, 5*60*1000);
+var hiddenAt = document.hidden ? Date.now() : null;
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    hiddenAt = Date.now();
+  } else if(hiddenAt && (Date.now() - hiddenAt) > 60*1000){
+    hardReload();
+  }
+});
+const SOURCES = [
+  {key:'lma', abbr:'LMA', name:'LaMétéoAgricole', color:'var(--s-lma)', url:'https://www.lameteoagricole.net/'},
+  {key:'mf',  abbr:'MF',  name:'Météo-France', color:'var(--s-mf)', url:'https://meteofrance.com/'},
+  {key:'mc',  abbr:'MC',  name:'MétéoConsult Marine', color:'var(--s-mc)', url:'https://marine.meteoconsult.fr/'},
+  {key:'mr',  abbr:'MR',  name:'MétéoRadar', color:'var(--s-mr)', url:'https://www.meteoetradar.com/'},
+];
+// Render order (own, mainstage, lma, mf, mc, mr) is a validated CVD-safe
+// sequence -- do not reorder without re-running the dataviz skill's palette
+// validator on the new order.
+
+function fmt(v, d=1){ return (v===null||v===undefined||Number.isNaN(v)) ? null : Number(v).toFixed(d); }
+
+function severity(kmh){
+  if(kmh===null||kmh===undefined) return null;
+  if(kmh < 20) return {cls:'good', label:'Calm'};
+  if(kmh < 40) return {cls:'warning', label:'Moderate'};
+  if(kmh < 60) return {cls:'serious', label:'Strong'};
+  return {cls:'critical', label:'Gale'};
+}
+
+// ---------- masthead / window range ----------
+if(DATA.length){
+  const a = DATA[0], b = DATA[DATA.length-1];
+  document.getElementById('winRange').textContent =
+    `${a.date_local} ${a.t_local} → ${b.date_local} ${b.t_local} (local)`;
+}
+
+// ---------- current stat row ----------
+(function renderStats(){
+  const row = document.getElementById('statRow');
+  let lastOwn = null;
+  for(let i=DATA.length-1;i>=0;i--){ if(DATA[i].own_avg_kmh!==null){ lastOwn = DATA[i]; break; } }
+  let lastMS = null;
+  for(let i=DATA.length-1;i>=0;i--){ if(DATA[i].mainstage_avg_kmh!==null){ lastMS = DATA[i]; break; } }
+  const cards = [];
+
+  if(lastOwn){
+    const sev = severity(lastOwn.own_gust_hourly_kmh);
+    cards.push(`
+      <div class="stat"><div class="band" style="background:var(--s-own)"></div>
+        <div class="label">Baie Stage avg wind (10 min)</div>
+        <div class="value">${fmt(lastOwn.own_avg_kmh)}<small>km/h</small></div>
+        <div class="foot">${fmt(lastOwn.own_avg_ms,1)} m/s · as of ${lastOwn.t_local}</div>
+      </div>`);
+    cards.push(`
+      <div class="stat"><div class="band" style="background:${sev?('var(--'+sev.cls+')'):'var(--border)'}"></div>
+        <div class="label">Baie Stage highest hourly gust</div>
+        <div class="value">${fmt(lastOwn.own_gust_hourly_kmh)}<small>km/h</small></div>
+        ${sev? `<div class="chip ${sev.cls}"><span class="dot"></span>${sev.label}</div>`:''}
+      </div>`);
+  } else {
+    cards.push(`<div class="stat"><div class="label">Baie Stage avg wind (10 min)</div><div class="value" style="color:var(--ink-3)">—</div><div class="foot">awaiting first export</div></div>`);
+    cards.push(`<div class="stat"><div class="label">Baie Stage highest hourly gust</div><div class="value" style="color:var(--ink-3)">—</div><div class="foot">awaiting first export</div></div>`);
+  }
+
+  if(lastMS){
+    const sev2 = severity(lastMS.mainstage_gust_hourly_kmh);
+    cards.push(`
+      <div class="stat"><div class="band" style="background:var(--s-mainstage)"></div>
+        <div class="label">Main Stage avg wind</div>
+        <div class="value">${fmt(lastMS.mainstage_avg_kmh)}<small>km/h</small></div>
+        <div class="foot">as of ${lastMS.t_local}</div>
+      </div>`);
+    cards.push(`
+      <div class="stat"><div class="band" style="background:${sev2?('var(--'+sev2.cls+')'):'var(--border)'}"></div>
+        <div class="label">Main Stage highest hourly gust</div>
+        <div class="value">${fmt(lastMS.mainstage_gust_hourly_kmh)}<small>km/h</small></div>
+        ${sev2? `<div class="chip ${sev2.cls}"><span class="dot"></span>${sev2.label}</div>`:''}
+      </div>`);
+  } else {
+    cards.push(`<div class="stat"><div class="label">Main Stage avg wind</div><div class="value" style="color:var(--ink-3)">—</div><div class="foot">awaiting first reading</div></div>`);
+    cards.push(`<div class="stat"><div class="label">Main Stage highest hourly gust</div><div class="value" style="color:var(--ink-3)">—</div><div class="foot">awaiting first reading</div></div>`);
+  }
+
+  row.innerHTML = cards.join('');
+})();
+
+// ---------- charts ----------
+function lineChart(el, seriesDefs, opts){
+  const W = Math.max(720, DATA.length*15), H = opts.h||230;
+  const padL=40, padR=14, padT=10, padB=26;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const maxVal = Math.max(opts.minMax||10, ...DATA.flatMap(d=>seriesDefs.map(s=>d[s.key])).filter(v=>v!==null&&v!==undefined));
+  const yMax = Math.ceil((maxVal*1.15)/10)*10;
+  const n = DATA.length;
+  const x = i => padL + (plotW * (i/(n-1||1)));
+  const y = v => padT + plotH - (plotH * (v/yMax));
+
+  let svg = `<svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  // gridlines + y labels
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const val = yMax*s/steps;
+    const yy = y(val);
+    svg += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${yy}" y2="${yy}"/>`;
+    svg += `<text class="axis-label" x="${padL-8}" y="${yy+3}" text-anchor="end">${Math.round(val)}</text>`;
+  }
+  // x labels every 4th block (hour marks)
+  DATA.forEach((d,i)=>{
+    if(i % 4 === 0){
+      svg += `<line class="gridline" x1="${x(i)}" x2="${x(i)}" y1="${padT}" y2="${H-padB}" opacity="0.5"/>`;
+      svg += `<text class="axis-label" x="${x(i)}" y="${H-8}" text-anchor="middle">${d.t_local}</text>`;
+    }
+  });
+
+  seriesDefs.forEach(s=>{
+    let path='', started=false;
+    DATA.forEach((d,i)=>{
+      const v = d[s.key];
+      if(v===null||v===undefined){ started=false; return; }
+      const cmd = started? 'L':'M';
+      if(s.step && started){
+        // step-after: horizontal then vertical
+        path += ` L${x(i)},${path.slice(path.lastIndexOf(',')+1).split(' ')[0]||y(v)}`;
+      }
+      path += ` ${cmd}${x(i)},${y(v)}`;
+      started = true;
+    });
+    svg += `<path d="${path.trim()}" fill="none" stroke="${s.color}" stroke-width="${s.step?1.75:2.5}"
+              ${s.step?'stroke-dasharray="1 5" stroke-linecap="round"':''} />`;
+  });
+
+  svg += `<g id="hoverlayer-${opts.id}"></g>`;
+  svg += `</svg>`;
+  el.innerHTML = svg;
+
+  // interaction
+  const svgEl = el.querySelector('svg');
+  const tip = document.createElement('div');
+  tip.className='tooltip'; document.body.appendChild(tip);
+  svgEl.addEventListener('mousemove', (e)=>{
+    const rect = svgEl.getBoundingClientRect();
+    const relX = (e.clientX-rect.left) * (W/rect.width);
+    const i = Math.round(((relX-padL)/plotW) * (n-1));
+    if(i<0||i>=n) return;
+    const d = DATA[i];
+    const hoverLayer = svgEl.querySelector(`#hoverlayer-${opts.id}`);
+    let hl = `<line class="crosshair" x1="${x(i)}" x2="${x(i)}" y1="${padT}" y2="${H-padB}"/>`;
+    seriesDefs.forEach(s=>{
+      const v = d[s.key];
+      if(v===null||v===undefined) return;
+      hl += `<circle class="hoverdot" cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${s.color}" stroke="var(--surface)" stroke-width="1.4"/>`;
+    });
+    hoverLayer.innerHTML = hl;
+    let rows = seriesDefs.map(s=> d[s.key]!==null&&d[s.key]!==undefined ? `<div class="tt-row"><span>${s.label}</span><b style="margin-left:14px;color:${s.color}">${fmt(d[s.key])}</b></div>` : '').join('');
+    tip.innerHTML = `<div class="tt-t">${d.date_local} · ${d.t_local}</div>${rows||'<div class="tt-t">no data yet</div>'}`;
+    tip.style.opacity=1;
+    tip.style.left = (e.clientX+14)+'px';
+    tip.style.top = (e.clientY+14)+'px';
+  });
+  svgEl.addEventListener('mouseleave', ()=>{ tip.style.opacity=0; svgEl.querySelector(`#hoverlayer-${opts.id}`).innerHTML=''; });
+}
+
+function legendHTML(defs){
+  return defs.map(s=>`<div class="item"><span class="sw" style="background:${s.color}"></span>${s.label}${s.step?' <span style="opacity:.6">(hourly)</span>':''}</div>`).join('');
+}
+
+const avgSeries = [
+  {key:'own_avg_kmh', label:'Baie Stage', color:'var(--s-own)', step:false},
+  {key:'mainstage_avg_kmh', label:'Main Stage', color:'var(--s-mainstage)', step:false},
+  ...SOURCES.map(s=>({key:`${s.key}_wind_kmh`, label:s.name, color:s.color, step:true})),
+];
+const gustSeries = [
+  {key:'own_gust_hourly_kmh', label:'Baie Stage', color:'var(--s-own)', step:false},
+  {key:'mainstage_gust_hourly_kmh', label:'Main Stage', color:'var(--s-mainstage)', step:false},
+  ...SOURCES.map(s=>({key:`${s.key}_gust_kmh`, label:s.name, color:s.color, step:true})),
+];
+
+document.getElementById('legend1').innerHTML = legendHTML(avgSeries);
+document.getElementById('legend2').innerHTML = legendHTML(gustSeries);
+
+if(DATA.length){
+  lineChart(document.getElementById('chart1'), avgSeries, {id:'a', minMax:20});
+  lineChart(document.getElementById('chart2'), gustSeries, {id:'g', minMax:40});
+} else {
+  document.getElementById('chart1').innerHTML = '<div class="pending">No data yet.</div>';
+  document.getElementById('chart2').innerHTML = '<div class="pending">No data yet.</div>';
+}
+
+// ---------- table ----------
+(function renderTable(){
+  let thead = `<thead><tr><th>Block</th><th>Baie avg</th><th>Baie gust (1h)</th><th>Main avg</th><th>Main gust (1h)</th>
+    ${SOURCES.map(s=>`<th>${s.abbr} wind</th><th>${s.abbr} gust</th>`).join('')}</tr></thead>`;
+  let body = '<tbody>';
+  DATA.forEach(d=>{
+    const isNow = d.own_avg_kmh!==null && (DATA.indexOf(d)===DATA.map(r=>r.own_avg_kmh!==null).lastIndexOf(true));
+    const cell = (v,cls='') => v!==null&&v!==undefined ? `<td class="${cls}">${fmt(v)}</td>` : `<td class="empty">–</td>`;
+    body += `<tr class="${isNow?'now-row':''}">
+      <td>${d.date_local} ${d.t_local}</td>
+      ${cell(d.own_avg_kmh,'own')}
+      ${cell(d.own_gust_hourly_kmh,'own')}
+      ${cell(d.mainstage_avg_kmh,'own')}
+      ${cell(d.mainstage_gust_hourly_kmh,'own')}
+      ${SOURCES.map(s=>cell(d[`${s.key}_wind_kmh`])+' '+cell(d[`${s.key}_gust_kmh`])).join(' ')}
+    </tr>`;
+  });
+  body += '</tbody>';
+  document.getElementById('dataTable').innerHTML = thead+body;
+})();
+
+document.getElementById('abbrevLegend').innerHTML =
+  `<div class="item"><span class="sw" style="background:var(--s-own)"></span>Baie = Baie Stage on-site anemometer</div>` +
+  `<div class="item"><span class="sw" style="background:var(--s-mainstage)"></span>Main = Main Stage on-site anemometer</div>` +
+  SOURCES.map(s=>`<div class="item"><span class="sw" style="background:${s.color}"></span>${s.abbr} = ${s.name}</div>`).join('');
+
+document.getElementById('srcList').innerHTML = SOURCES.map(s=>
+  `<a href="${s.url}" target="_blank" rel="noopener"><span class="dot" style="background:${s.color}"></span>${s.name} ↗</a>`
+).join('');
+document.getElementById('builtAt').textContent = `Last built: ${BUILT_AT} · own-sensor data resampled from a 2-minute export of the on-site dashboard.`;
+</script>
